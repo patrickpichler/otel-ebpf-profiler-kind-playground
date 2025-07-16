@@ -64,6 +64,8 @@ ENV GOPATH=/tmp/gocache/gopath
 WORKDIR /agent
 COPY opentelemetry-ebpf-profiler /agent
 
+RUN --mount=type=cache,target=/tmp/gocache make -C support/ebpf errors.h
+
 RUN --mount=type=cache,target=/tmp/gocache GOOS=${TARGETOS} GOARCH=${TARGETARCH} make \
   TARGET_ARCH=${TARGETARCH}\
   VERSION=${VERSION}
