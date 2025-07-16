@@ -14,7 +14,7 @@ spec:
       hostPID: true
       containers:
         - name: profiler
-          image: ghcr.io/patrickpichler/otel-ebpf-profiler-kind-playground:latest
+          image: ghcr.io/patrickpichler/otel-ebpf-profiler-kind-playground:main
           command: ["/usr/local/bin/ebpf-profiler", "-collection-agent", "otel-collector-service:4317", "-no-kernel-version-check", "-disable-tls", "-v"]
           securityContext:
             privileged: true

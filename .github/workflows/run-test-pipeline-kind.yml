@@ -1,0 +1,70 @@
+name: Run test pipeline (kind)
+
+on:
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  kind-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Create kind cluster
+      uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
+      with:
+        cluster_name: kind
+
+    - name: Deploy OTEL collector
+      run: |
+          kubectl get node -o wide
+
+          kubectl create ns otel
+
+          kubectl -n otel apply -f deploy/otel-collector.yaml
+          kubectl -n otel rollout status deploy otel-collector --timeout 2m
+
+    - name: Deploy profiler
+      run: |
+          kubectl -n otel apply -f deploy/profiler.yaml
+          kubectl -n otel rollout status daemonset ebpf-profiler --timeout 2m
+
+    - name: Deploy cpu-stress
+      run: |
+          kubectl -n otel apply -f deploy/cpu-stress.yaml
+          kubectl -n otel rollout status deploy cpu-stress --timeout 2m
+
+    - name: Wait
+      run: |
+          sleep 120
+
+    - name: Delete test namespace
+      run: |
+        kubectl delete ns otel --wait
+
+    - name: Collect data
+      run: |
+          docker cp kind-control-plane:/tmp/otel-export/otel.json otel.json
+
+    - name: Archive OTEL data
+      uses: actions/upload-artifact@v4
+      with:
+        name: otel-event-data
+        path: otel.json

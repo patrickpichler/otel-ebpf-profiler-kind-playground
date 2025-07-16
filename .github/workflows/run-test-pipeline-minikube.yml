@@ -1,4 +1,4 @@
-name: Run test pipeline
+name: Run test pipeline (minikube)
 
 on:
   workflow_dispatch:
