@@ -1,0 +1,3 @@
+[submodule "opentelemetry-ebpf-profiler"]
+	path = opentelemetry-ebpf-profiler
+	url = git@github.com:open-telemetry/opentelemetry-ebpf-profiler.git
