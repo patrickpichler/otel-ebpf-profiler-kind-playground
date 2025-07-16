@@ -32,23 +32,17 @@ jobs:
       with:
         cluster_name: kind
 
-    - name: Deploy OTEL collector
+    - name: Deploy
       run: |
           kubectl get node -o wide
-
           kubectl create ns otel
+          kubectl -n otel apply -k deploy/kubernetes/base
 
-          kubectl -n otel apply -f deploy/otel-collector.yaml
+    - name: Await everything up
+      run: |
+          kubectl -n otel get pods
           kubectl -n otel rollout status deploy otel-collector --timeout 2m
-
-    - name: Deploy profiler
-      run: |
-          kubectl -n otel apply -f deploy/profiler.yaml
           kubectl -n otel rollout status daemonset ebpf-profiler --timeout 2m
-
-    - name: Deploy cpu-stress
-      run: |
-          kubectl -n otel apply -f deploy/cpu-stress.yaml
           kubectl -n otel rollout status deploy cpu-stress --timeout 2m
 
     - name: Wait
