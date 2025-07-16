@@ -11,7 +11,7 @@ RUN cross_debian_arch=$(uname -m | sed -e 's/aarch64/amd64/'  -e 's/x86_64/arm64
     apt-get clean autoclean && \
     apt-get autoremove --yes
 
-COPY go.mod /tmp/go.mod
+COPY opentelemetry-ebpf-profiler/go.mod /tmp/go.mod
 # Extract Go version from go.mod
 RUN GO_VERSION=$(grep -oPm1 '^go \K([[:digit:].]+)' /tmp/go.mod) && \
     GOARCH=$(uname -m) && if [ "$GOARCH" = "x86_64" ]; then GOARCH=amd64; elif [ "$GOARCH" = "aarch64" ]; then GOARCH=arm64; fi && \
@@ -62,7 +62,7 @@ ENV GOMODCACHE=/tmp/gocache/gomodcache
 ENV GOPATH=/tmp/gocache/gopath
 
 WORKDIR /agent
-COPY . /agent
+COPY opentelemetry-ebpf-profiler /agent
 
 RUN --mount=type=cache,target=/tmp/gocache GOOS=${TARGETOS} GOARCH=${TARGETARCH} make \
   TARGET_ARCH=${TARGETARCH}\
