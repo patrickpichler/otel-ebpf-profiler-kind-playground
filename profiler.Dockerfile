@@ -72,6 +72,6 @@ RUN --mount=type=cache,target=/tmp/gocache GOOS=${TARGETOS} GOARCH=${TARGETARCH}
 
 FROM alpine:latest
 
-COPY --from=builder /agent/ebpf-profiler /usr/bin/local/ebpf-profiler
+COPY --from=builder /agent/ebpf-profiler /usr/local/bin/ebpf-profiler
 
-ENTRYPOINT ["/usr/bin/local/ebpf-profiler"]
+ENTRYPOINT ["/usr/local/bin/ebpf-profiler"]
