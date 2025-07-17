@@ -14,7 +14,9 @@ spec:
     spec:
       containers:
         - name: stress
-          image:  ghcr.io/colinianking/stress-ng:latest
+          # stress-ng is stripped sadly and doesn't show any stack traces
+          # image:  ghcr.io/colinianking/stress-ng:latest
+          image:  polinux/stress
           command: ["stress-ng"]
           args: ["--cpu", "1"]
           resources:
