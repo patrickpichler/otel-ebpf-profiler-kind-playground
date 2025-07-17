@@ -1,0 +1,27 @@
+name: Run test pipeline (all)
+
+on:
+  workflow_dispatch:
+
+concurrency: release-all
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  test-kind-1_30:
+    uses: ./.github/workflows/run-test-pipeline-kind-v1_30.yaml
+    secrets: [inherit]
+
+  test-kind:
+    uses: ./.github/workflows/run-test-pipeline-kind.yaml
+    secrets: [inherit]
+
+  test-minikind-none:
+    uses: ./github/workflows/run-test-pipeline-minikube-none.yml
+    secrets: [inherit]
+
+  test-minikind:
+    uses: ./github/workflows/run-test-pipeline-minikube.yml
+    secrets: [inherit]
