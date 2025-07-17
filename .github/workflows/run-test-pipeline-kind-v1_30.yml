@@ -46,8 +46,8 @@ jobs:
           kubectl -n otel rollout status daemonset ebpf-profiler --timeout 2m
           kubectl -n otel rollout status deploy cpu-stress --timeout 2m
 
-    - name: Report error
-      if: failure()
+    - name: Show status
+      if: always()
       run: |
           kubectl -n otel get pods
 
