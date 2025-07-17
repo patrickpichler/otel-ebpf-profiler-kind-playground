@@ -14,8 +14,10 @@ spec:
     spec:
       containers:
         - name: stress
-          image:  ghcr.io/patrickpichler/stress-ng:latest
-          command: ["stress-ng"]
+          # TODO: figure out why this isn't producing anything
+          # image:  ghcr.io/patrickpichler/stress-ng:latest
+          image: polinux/stress:latest
+          command: ["stress"]
           args: ["--cpu", "1"]
           resources:
             limits:
