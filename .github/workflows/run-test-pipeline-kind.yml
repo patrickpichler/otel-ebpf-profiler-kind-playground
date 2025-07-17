@@ -49,17 +49,30 @@ jobs:
       run: |
           sleep 120
 
+    - name: Profiler logs
+      run: |
+        kubectl -n otel logs daemonset/ebpf-profiler | tee profiler.log
+
+    - name: Collector logs
+      run: |
+        kubectl -n otel logs deploy/otel-collector | tee otel-collector.log
+
     - name: Delete test namespace
       run: |
         kubectl delete ns otel --wait
 
     - name: Collect data
       run: |
+          mkdir run-result
+
           # docker cp is not working for whatever reason
-          docker exec kind-control-plane cat /tmp/otel-export/otel.json > otel.json
+          docker exec kind-control-plane cat /tmp/otel-export/otel.json > run-result/otel.json
+
+          mv profiler.log run-result/
+          mv otel-collector.log run-result/
 
     - name: Archive OTEL data
       uses: actions/upload-artifact@v4
       with:
-        name: otel-event-data
-        path: otel.json
+        name: run-result
+        path: run-result
