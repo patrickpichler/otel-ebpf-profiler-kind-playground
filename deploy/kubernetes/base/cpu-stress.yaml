@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
         - name: stress
-          image: polinux/stress
-          command: ["stress"]
+          image:  ghcr.io/colinianking/stress-ng:latest
+          command: ["stress-ng"]
           args: ["--cpu", "1"]
           resources:
             limits:

@@ -1,6 +1,18 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - namespace.yaml
   - cpu-stress.yaml
   - otel-collector.yaml
   - profiler.yaml
+
+transformers:
+  - |-
+    apiVersion: builtin
+    kind: NamespaceTransformer
+    metadata:
+      name: notImportantHere
+      # the namespace transformer bugs out when just using the -n flag in kubectl
+      # hence the namespace is set here
+      namespace: otel
+    setRoleBindingSubjects: "allServiceAccounts"
