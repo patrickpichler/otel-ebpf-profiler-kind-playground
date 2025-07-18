@@ -41,42 +41,42 @@ jobs:
           sleep 2
         done
 
-        # This is fine in a GH action
-        sudo chmod +r /var/lib/k0s/pki/admin.conf
+        mkdir -p ~/.kube
+        sudo k0s kubeconfig admin > ~/.kube/config
 
     - name: Wait for k0s node to be ready
       run: |
         for i in {1..30}; do
-          if k0s kubectl get node -o wide > /dev/null 2>&1; then
+          if kubectl get node -o wide > /dev/null 2>&1; then
             break
           fi
           echo "Waiting for k0s node to be ready..."
           sleep 5
         done
 
-        k0s kubectl get node -o wide
+        kubectl get node -o wide
 
     - name: Deploy
       run: |
-          k0s kubectl create ns otel
-          k0s kubectl -n otel apply -k deploy/kubernetes/base
+          kubectl create ns otel
+          kubectl -n otel apply -k deploy/kubernetes/base
 
     - name: Await everything up
       run: |
-          k0s kubectl -n otel get daemonset
-          k0s kubectl -n otel get deploy
-          k0s kubectl -n otel get pods
-          k0s kubectl -n otel rollout status deploy otel-collector --timeout 2m
-          k0s kubectl -n otel rollout status daemonset ebpf-profiler --timeout 2m
-          k0s kubectl -n otel rollout status deploy cpu-stress --timeout 2m
+          kubectl -n otel get daemonset
+          kubectl -n otel get deploy
+          kubectl -n otel get pods
+          kubectl -n otel rollout status deploy otel-collector --timeout 2m
+          kubectl -n otel rollout status daemonset ebpf-profiler --timeout 2m
+          kubectl -n otel rollout status deploy cpu-stress --timeout 2m
 
     - name: Show status
       if: always()
       run: |
-          k0s kubectl -n otel get daemonset
-          k0s kubectl -n otel get deploy
-          k0s kubectl -n otel get pods
-          k0s kubectl -n otel get events
+          kubectl -n otel get daemonset
+          kubectl -n otel get deploy
+          kubectl -n otel get pods
+          kubectl -n otel get events
 
     - name: Wait
       run: |
@@ -84,15 +84,15 @@ jobs:
 
     - name: Profiler logs
       run: |
-        k0s kubectl -n otel logs daemonset/ebpf-profiler | tee profiler.log
+        kubectl -n otel logs daemonset/ebpf-profiler | tee profiler.log
 
     - name: Collector logs
       run: |
-        k0s kubectl -n otel logs deploy/otel-collector | tee otel-collector.log
+        kubectl -n otel logs deploy/otel-collector | tee otel-collector.log
 
     - name: Delete test namespace
       run: |
-        k0s kubectl delete ns otel --wait
+        kubectl delete ns otel --wait
 
     - name: Collect data
       run: |
