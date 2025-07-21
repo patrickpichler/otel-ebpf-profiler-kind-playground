@@ -1,0 +1,46 @@
+name: Setup k0s
+description: Configures k0s (https://k0sproject.io/) on the current runner
+inputs:
+  version:
+    descrption: "k0s version to be installed"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install k0s
+      shell: bash
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo K0S_VERSION=${{ inputs.version }} sh
+        sudo k0s install controller --single
+        sudo k0s start
+
+    - name: Wait for k0s admin.conf
+      shell: bash
+      run: |
+        for i in {1..30}; do
+          if [ -f /var/lib/k0s/pki/admin.conf ]; then
+            break
+          fi
+          echo "Waiting for k0s admin.conf..."
+          sleep 5
+        done
+
+        if [ ! -f /var/lib/k0s/pki/admin.conf ]; then
+          exit 1
+        fi
+
+        mkdir -p ~/.kube
+        sudo k0s kubeconfig admin > ~/.kube/config
+
+    - name: Wait for k0s node to be ready
+      shell: bash
+      run: |
+        for i in {1..30}; do
+          if kubectl get node -o wide > /dev/null 2>&1; then
+            break
+          fi
+          echo "Waiting for k0s node to be ready..."
+          sleep 5
+        done
+
+        kubectl get node -o wide

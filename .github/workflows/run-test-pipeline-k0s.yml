@@ -29,32 +29,7 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Setup k0s
-      run: |
-        curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sudo sh
-        sudo k0s install controller --single
-        sudo k0s start
-
-    - name: Wait for k0s admin.conf
-      timeout-minutes: 2
-      run: |
-        while [ ! -f /var/lib/k0s/pki/admin.conf ]; do
-          sleep 2
-        done
-
-        mkdir -p ~/.kube
-        sudo k0s kubeconfig admin > ~/.kube/config
-
-    - name: Wait for k0s node to be ready
-      run: |
-        for i in {1..30}; do
-          if kubectl get node -o wide > /dev/null 2>&1; then
-            break
-          fi
-          echo "Waiting for k0s node to be ready..."
-          sleep 5
-        done
-
-        kubectl get node -o wide
+      uses: ./.github/actions/setup-k0s
 
     - name: Deploy
       run: |
