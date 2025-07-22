@@ -1,0 +1,83 @@
+name: Run test pipeline (k3s)
+
+on:
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  k3s-test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Setup k3s
+      uses: ./.github/actions/setup-k3s
+
+    - name: Deploy
+      run: |
+          kubectl create ns otel
+          kubectl -n otel apply -k deploy/kubernetes/base
+
+    - name: Await everything up
+      run: |
+          kubectl -n otel get daemonset
+          kubectl -n otel get deploy
+          kubectl -n otel get pods
+          kubectl -n otel rollout status deploy otel-collector --timeout 2m
+          kubectl -n otel rollout status daemonset ebpf-profiler --timeout 2m
+          kubectl -n otel rollout status deploy cpu-stress --timeout 2m
+
+    - name: Show status
+      if: always()
+      run: |
+          kubectl -n otel get daemonset
+          kubectl -n otel get deploy
+          kubectl -n otel get pods
+          kubectl -n otel get events
+
+    - name: Wait
+      run: |
+          sleep 120
+
+    - name: Profiler logs
+      run: |
+        kubectl -n otel logs daemonset/ebpf-profiler | tee profiler.log
+
+    - name: Collector logs
+      run: |
+        kubectl -n otel logs deploy/otel-collector | tee otel-collector.log
+
+    - name: Delete test namespace
+      run: |
+        kubectl delete ns otel --wait
+
+    - name: Collect data
+      run: |
+          mkdir run-result
+          cp /tmp/otel-export/otel.json run-result/otel.json
+          mv profiler.log run-result/
+          mv otel-collector.log run-result/
+
+    - name: Archive OTEL data
+      uses: actions/upload-artifact@v4
+      with:
+        name: run-result
+        path: run-result

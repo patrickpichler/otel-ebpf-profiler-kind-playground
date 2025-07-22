@@ -1,0 +1,47 @@
+name: Setup k3s
+description: Configures k3s (https://k3s.io) on the current runner
+inputs:
+  version:
+    descrption: "k3s version to be installed (format vX.Y.Z+k3s1)"
+
+  extra-args:
+    descrption: "k3s version to be installed"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install k3s
+      shell: bash
+      run: |
+        curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${{ inputs.version }} sh -s - ${{ inputs.extra-args }}
+
+    - name: Wait for k3s admin.conf
+      shell: bash
+      run: |
+        for i in {1..30}; do
+          if [ -f /etc/rancher/k3s/k3s.yaml ]; then
+            break
+          fi
+          echo "Waiting for k3s.yaml..."
+          sleep 5
+        done
+
+        if [ ! -f /etc/rancher/k3s/k3s.yaml ]; then
+          exit 1
+        fi
+
+        mkdir -p ~/.kube
+        sudo cat /etc/rancher/k3s/k3s.yaml > ~/.kube/config
+
+    - name: Wait for k3s node to be ready
+      shell: bash
+      run: |
+        for i in {1..30}; do
+          if kubectl get node -o wide > /dev/null 2>&1; then
+            break
+          fi
+          echo "Waiting for k3s node to be ready..."
+          sleep 5
+        done
+
+        kubectl get node -o wide
