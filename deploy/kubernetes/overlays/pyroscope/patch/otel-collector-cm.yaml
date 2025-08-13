@@ -1,0 +1,72 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+
+    processors:
+      batch:
+
+      k8sattributes:
+        auth_type: "serviceAccount"
+        passthrough: false
+        filter:
+          node_from_env_var: KUBERNETES_NODE_NAME
+        extract:
+          metadata:
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.deployment.name
+            - k8s.namespace.name
+            - service.namespace
+            - service.name
+            - service.version
+            - service.instance.id
+          labels:
+            - tag_name: app.label.component
+              key: app.kubernetes.io/component
+              from: pod
+          otel_annotations: true
+        pod_association:
+          - sources:
+              - from: resource_attribute
+                name: container.id
+
+    exporters:
+      file:
+        path: /tmp/export/otel.json
+      otlp/pyroscope:
+        endpoint: http://pyroscope.pyroscope:4040
+        tls:
+          insecure: true
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [k8sattributes,batch]
+          exporters: [file]
+        traces:
+          receivers: [otlp]
+          processors: [k8sattributes,batch]
+          exporters: [file]
+        logs:
+          receivers: [otlp]
+          processors: [k8sattributes,batch]
+          exporters: [file]
+        profiles:
+          receivers: [otlp]
+          processors: [k8sattributes]
+          exporters: [file, otlp/pyroscope]
+
+      telemetry:
+        logs:
+          level: debug

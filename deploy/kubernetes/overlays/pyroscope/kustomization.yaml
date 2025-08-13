@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - pyroscope.yaml
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 0
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: cpu-stress
+  - path: patch/otel-collector-cm.yaml
+    target:
+      version: v1
+      kind: ConfigMap
+      name: otel-collector-config

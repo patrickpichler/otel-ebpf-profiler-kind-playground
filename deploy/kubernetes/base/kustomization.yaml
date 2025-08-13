@@ -16,3 +16,4 @@ transformers:
       # hence the namespace is set here
       namespace: otel
     setRoleBindingSubjects: "allServiceAccounts"
+    unsetOnly: true
